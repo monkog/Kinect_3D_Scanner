@@ -10,21 +10,44 @@ namespace ModelCreator.ViewModel
     public class KinectViewModel : ViewModelBase
     {
         #region Private Fields
-        /// <summary>
-        /// The Kinect service
-        /// </summary>
         private readonly KinectService _kinectService;
+        private double _rotationAngle;
+        private double _currentRotation;
+        private const double FullRotationAngle = 360;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
         /// Gets the kinect service.
         /// </summary>
-        /// <value>
-        /// The kinect service.
-        /// </value>
         public KinectService KinectService
         {
             get { return _kinectService; }
+        }
+        /// <summary>
+        /// Gets or sets the rotation angle.
+        /// </summary>
+        public double RotationAngle
+        {
+            get { return _rotationAngle; }
+            set
+            {
+                if (_rotationAngle == value) return;
+                _rotationAngle = value;
+                OnPropertyChanged("RotationAngle");
+            }
+        }
+        /// <summary>
+        /// Gets or sets the current rotation.
+        /// </summary>
+        public double CurrentRotation
+        {
+            get { return _currentRotation; }
+            set
+            {
+                if (_currentRotation == value) return;
+                _currentRotation = value;
+                OnPropertyChanged("CurrentRotation");
+            }
         }
         #endregion Public Properties
         #region .ctor
@@ -34,6 +57,8 @@ namespace ModelCreator.ViewModel
         /// <param name="kinectService">The kinect service.</param>
         public KinectViewModel(KinectService kinectService)
         {
+            RotationAngle = 30;
+            CurrentRotation = 0;
             _kinectService = kinectService;
             _kinectService.Initialize();
         }
@@ -55,7 +80,7 @@ namespace ModelCreator.ViewModel
         /// </summary>
         public void CaptureExecuted()
         {
-
+            CurrentRotation = (CurrentRotation + RotationAngle) % FullRotationAngle;
         }
         #endregion Commands
     }

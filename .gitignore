@@ -12,6 +12,7 @@ bin/
 obj/
 .nuget/
 packages/
+Resources/
 
 # Windows Installer files
 *.cab

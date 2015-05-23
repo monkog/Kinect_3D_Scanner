@@ -6,8 +6,7 @@
         WindowState="Maximized"
 		WindowStyle="None"
         Title="Model Creator"
-        Height="768" Width="1366"
-        Cursor="None"
+        Height="880.5" Width="1537"
         DataContext="{Binding KinectViewModel, Source={StaticResource KinectViewModelLoader}}">
     <Window.Resources>
         <converters:ReducedValueConverter x:Key="ReducedValueConverter"/>
@@ -26,12 +25,35 @@
 			           view:SizeObserver.Observe="True"
 			           view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
 			           view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
-                <Image x:Name="ImageArea1" Source="{Binding KinectService.KinectDepthImage}" Margin="20,0,0,0"
+                <Image x:Name="ImageArea1" Source="{Binding KinectService.KinectDepthImage}" Margin="20, 0, 0, 0"
 			           view:SizeObserver.Observe="True"
 			           view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
 			           view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
             </StackPanel>
-            <Button Width="200" Height="100" VerticalAlignment="Bottom" Command="{Binding CaptureCommand}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <StackPanel Margin="0, 0, 40, 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Capture every " FontSize="30" FontWeight="Bold"/>
+                        <TextBox Text="{Binding RotationAngle}" FontSize="30" FontWeight="Bold" MinWidth="70"/>
+                        <TextBlock Text="°" FontSize="30" FontWeight="Bold"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Model rotation: " FontSize="30" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CurrentRotation}" FontSize="30" FontWeight="Bold"/>
+                        <TextBlock Text="°" FontSize="30" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Width="300" Height="100" VerticalAlignment="Bottom" Command="{Binding CaptureCommand}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Source="Resources/camera.png" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <TextBlock Margin="25, 0, 0, 0" Grid.Column="1" Text="Capture" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Button>
+            </StackPanel>
         </StackPanel>
         <!--3D control-->
         <!--<Viewport3D 
