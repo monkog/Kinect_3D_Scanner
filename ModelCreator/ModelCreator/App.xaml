@@ -1,0 +1,11 @@
+﻿<Application x:Class="ModelCreator.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModel="clr-namespace:ModelCreator.ViewModel"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <viewModel:KinectViewModelLoader x:Key="KinectViewModelLoader"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

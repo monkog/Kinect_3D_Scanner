@@ -1,0 +1,45 @@
+﻿<Window x:Class="ModelCreator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:view="clr-namespace:ModelCreator.View"
+        xmlns:converters="clr-namespace:ModelCreator.Converters"
+        WindowState="Maximized"
+		WindowStyle="None"
+        Title="Model Creator"
+        Height="768" Width="1366"
+        Cursor="None"
+        DataContext="{Binding KinectViewModel, Source={StaticResource KinectViewModelLoader}}">
+    <!--Resources used in MainWindow-->
+    <Window.Resources>
+        <!--<converters:ReducedValueConverter x:Key="ReducedValueConverter"/>
+        <converters:BitmapToImageSourceConverter x:Key="BitmapToImageSourceConverter"/>
+        <converters:IncreasedValueConverter x:Key="IncreasedValueConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:ValueToVisibilityConverter x:Key="ValueToVisibilityConverter"/>
+        <converters:DebugConverter x:Key="DebugConverter"/>-->
+    </Window.Resources>
+    <!--Main Grid. Keeps all of the UI elements.-->
+    <Grid>
+        <!--Image from the Kinect camera-->
+        <Image x:Name="ImageArea" Source="{Binding KinectService.KinectCameraImage}"
+			   view:SizeObserver.Observe="True"
+			   view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
+			   view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
+        <!--3D control-->
+        <!--<Viewport3D 
+                                   IsHitTestVisible="False"
+                                   ClipToBounds="False" 
+								   Width="{Binding KinectService.Width}" 
+								   Height="{Binding KinectService.Height}">
+            <Viewport3D.Camera>
+                <OrthographicCamera Position="0,0,10" LookDirection="0,0,-10" UpDirection="0,1,0"/>
+            </Viewport3D.Camera>
+        </Viewport3D>-->
+        <!--Grid used for viewing error messages-->
+        <Grid Name="ErrorGrid" Opacity="0.7" Background="Black" Visibility="{Binding KinectService.ErrorGridVisibility}">
+            <TextBlock Text="{Binding KinectService.ErrorGridMessage}" 
+                       FontSize="20" TextAlignment="Center" Opacity="0.7" VerticalAlignment="Center" Foreground="White"/>
+        </Grid>
+    </Grid>
+</Window>
+
