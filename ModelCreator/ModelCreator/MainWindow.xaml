@@ -9,22 +9,30 @@
         Height="768" Width="1366"
         Cursor="None"
         DataContext="{Binding KinectViewModel, Source={StaticResource KinectViewModelLoader}}">
-    <!--Resources used in MainWindow-->
     <Window.Resources>
-        <!--<converters:ReducedValueConverter x:Key="ReducedValueConverter"/>
+        <converters:ReducedValueConverter x:Key="ReducedValueConverter"/>
         <converters:BitmapToImageSourceConverter x:Key="BitmapToImageSourceConverter"/>
         <converters:IncreasedValueConverter x:Key="IncreasedValueConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:ValueToVisibilityConverter x:Key="ValueToVisibilityConverter"/>
-        <converters:DebugConverter x:Key="DebugConverter"/>-->
+        <converters:DebugConverter x:Key="DebugConverter"/>
     </Window.Resources>
     <!--Main Grid. Keeps all of the UI elements.-->
     <Grid>
-        <!--Image from the Kinect camera-->
-        <Image x:Name="ImageArea" Source="{Binding KinectService.KinectCameraImage}"
-			   view:SizeObserver.Observe="True"
-			   view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
-			   view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
+        <StackPanel>
+            <!--Image from the Kinect camera-->
+            <StackPanel Orientation="Horizontal" Height="550" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0, 20">
+                <Image x:Name="ImageArea" Source="{Binding KinectService.KinectCameraImage}"
+			           view:SizeObserver.Observe="True"
+			           view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
+			           view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
+                <Image x:Name="ImageArea1" Source="{Binding KinectService.KinectDepthImage}" Margin="20,0,0,0"
+			           view:SizeObserver.Observe="True"
+			           view:SizeObserver.ObservedWidth="{Binding KinectService.Width, Mode=OneWayToSource}"
+			           view:SizeObserver.ObservedHeight="{Binding KinectService.Height, Mode=OneWayToSource}"/>
+            </StackPanel>
+            <Button Width="200" Height="100" VerticalAlignment="Bottom" Command="{Binding CaptureCommand}"/>
+        </StackPanel>
         <!--3D control-->
         <!--<Viewport3D 
                                    IsHitTestVisible="False"

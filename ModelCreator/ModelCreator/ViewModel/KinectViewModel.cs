@@ -1,4 +1,7 @@
 ﻿
+using Microsoft.Practices.Prism.Commands;
+using System.Windows.Input;
+
 namespace ModelCreator.ViewModel
 {
     /// <summary>
@@ -35,7 +38,25 @@ namespace ModelCreator.ViewModel
             _kinectService.Initialize();
         }
         #endregion .ctor
-        #region Private Methods
-        #endregion Private Methods
+        #region Commands
+        /// <summary>
+        /// The command, executed after clicking on capture button
+        /// </summary>
+        private ICommand _captureCommand;
+        /// <summary>
+        /// Gets the command.
+        /// </summary>
+        public ICommand CaptureCommand
+        {
+            get { return _captureCommand ?? (_captureCommand = new DelegateCommand(CaptureExecuted)); }
+        }
+        /// <summary>
+        /// Executes when capture button was hit.
+        /// </summary>
+        public void CaptureExecuted()
+        {
+
+        }
+        #endregion Commands
     }
 }

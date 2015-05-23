@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -11,39 +10,17 @@ namespace ModelCreator.ViewModel
     public class KinectService : ViewModelBase, IKinectService
     {
         #region Private Fields
-        /// <summary>
-        /// Current KinectSensor
-        /// </summary>
         private KinectSensor _kinectSensor;
-        /// <summary>
-        /// WritableBitmap that source from Kinect camera is written to
-        /// </summary>
         private WriteableBitmap _kinectCameraImage;
-        /// <summary>
-        /// Bounds of camera source
-        /// </summary>
+        private WriteableBitmap _kinectDepthImage;
         private Int32Rect _cameraSourceBounds;
-        /// <summary>
-        /// Number of bytes per line
-        /// </summary>
         private int _colorStride;
-        /// <summary>
-        /// Visibility of ErrorGrid 
-        /// </summary>
+        private Int32Rect _depthSourceBounds;
+        private int _depthStride;
         private Visibility _errorGridVisibility;
-        /// <summary>
-        /// The image width
-        /// </summary>
         private double _imageWidth;
-        /// <summary>
-        /// The image height
-        /// </summary>
         private double _imageHeight;
-        /// <summary>
-        /// The error grid message
-        /// </summary>`
         private string _errorGridMessage;
-        private DepthImagePixel[] _depthImage;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -69,9 +46,6 @@ namespace ModelCreator.ViewModel
         /// <summary>
         /// Gets or sets the Kinect camera image.
         /// </summary>
-        /// <value>
-        /// The Kinect camera image.
-        /// </value>
         public WriteableBitmap KinectCameraImage
         {
             get { return _kinectCameraImage; }
@@ -81,6 +55,20 @@ namespace ModelCreator.ViewModel
                     return;
                 _kinectCameraImage = value;
                 OnPropertyChanged("KinectCameraImage");
+            }
+        }
+        /// <summary>
+        /// Gets or sets the kinect depth image.
+        /// </summary>
+        public WriteableBitmap KinectDepthImage
+        {
+            get { return _kinectDepthImage; }
+            set
+            {
+                if (Equals(_kinectDepthImage, value))
+                    return;
+                _kinectDepthImage = value;
+                OnPropertyChanged("KinectDepthImage");
             }
         }
         /// <summary>
@@ -171,9 +159,14 @@ namespace ModelCreator.ViewModel
                 _colorStride = colorStream.FrameWidth * colorStream.FrameBytesPerPixel;
                 sensor.ColorFrameReady += KinectSensor_ColorFrameReady;
 
-                sensor.DepthStream.Enable();
+                var depthStream = sensor.DepthStream;
+                depthStream.Enable();
+
+                KinectDepthImage = new WriteableBitmap(depthStream.FrameWidth, depthStream.FrameHeight
+                    , 96, 96, PixelFormats.Gray16, null);
+                _depthSourceBounds = new Int32Rect(0, 0, depthStream.FrameWidth, depthStream.FrameHeight);
+                _depthStride = depthStream.FrameWidth * depthStream.FrameBytesPerPixel;
                 sensor.DepthFrameReady += KinectSensor_DepthFrameReady;
-                _depthImage = new DepthImagePixel[sensor.DepthStream.FramePixelDataLength];
                 try
                 {
                     sensor.Start();
@@ -203,11 +196,31 @@ namespace ModelCreator.ViewModel
         }
         private void KinectSensor_DepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
         {
-            using (var frame = e.OpenDepthImageFrame())
+            using (var depthFrame = e.OpenDepthImageFrame())
             {
-                if (frame == null || frame.PixelDataLength == 0)
+                if (depthFrame == null || depthFrame.PixelDataLength == 0)
                     return;
-                frame.CopyDepthImagePixelDataTo(_depthImage);
+                var depthImage = new DepthImagePixel[depthFrame.PixelDataLength];
+                depthFrame.CopyDepthImagePixelDataTo(depthImage);
+
+                // Get the min and max reliable depth for the current frame
+                int minDepth = depthFrame.MinDepth;
+                int maxDepth = depthFrame.MaxDepth;
+
+                // Convert the depth to grayscale
+                int colorPixelIndex = 0;
+                byte[] colorPixels = new byte[depthImage.Length * 2];
+                for (int i = 0; i < depthImage.Length; ++i)
+                {
+                    short depth = depthImage[i].Depth;
+                    byte intensity = (byte)(Math.Max(Math.Min(depth, maxDepth), minDepth));
+
+                    colorPixels[colorPixelIndex++] = intensity;
+                    colorPixels[colorPixelIndex++] = intensity;
+                }
+
+                KinectDepthImage.WritePixels(_depthSourceBounds, colorPixels, _depthStride, 0);
+                OnPropertyChanged("KinectDepthImage");
             }
         }
         /// <summary>
