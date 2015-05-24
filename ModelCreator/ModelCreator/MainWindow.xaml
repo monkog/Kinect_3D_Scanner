@@ -56,19 +56,16 @@
             </StackPanel>
         </StackPanel>
         <!--3D control-->
-        <!--<Viewport3D 
-                                   IsHitTestVisible="False"
-                                   ClipToBounds="False" 
-								   Width="{Binding KinectService.Width}" 
-								   Height="{Binding KinectService.Height}">
+        <Viewport3D>
             <Viewport3D.Camera>
-                <OrthographicCamera Position="0,0,10" LookDirection="0,0,-10" UpDirection="0,1,0"/>
+                <!--<OrthographicCamera Position="0, 0, 10" LookDirection="0, 0, -10" UpDirection="0, 1, 0"/>-->
+                <PerspectiveCamera Position="-40,40,40" LookDirection="40,-40,-40" UpDirection="0,0,1" />
             </Viewport3D.Camera>
-        </Viewport3D>-->
+            <ModelVisual3D Content="{Binding Model}"/>
+        </Viewport3D>
         <!--Grid used for viewing error messages-->
         <Grid Name="ErrorGrid" Opacity="0.7" Background="Black" Visibility="{Binding KinectService.ErrorGridVisibility}">
-            <TextBlock Text="{Binding KinectService.ErrorGridMessage}" 
-                       FontSize="20" TextAlignment="Center" Opacity="0.7" VerticalAlignment="Center" Foreground="White"/>
+            <TextBlock Text="{Binding KinectService.ErrorGridMessage}" FontSize="20" TextAlignment="Center" Opacity="0.7" VerticalAlignment="Center" Foreground="White"/>
         </Grid>
     </Grid>
 </Window>

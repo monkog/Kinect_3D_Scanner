@@ -1,166 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-
+using Microsoft.Kinect;
+using ModelCreator.Model;
 
 namespace ModelCreator.ViewModel
 {
     public class ModelBuilder
     {
+        #region Private Members
         private CubeEx _modelCube;
+        private const int Tolerance = 100;
+        #endregion Private Members
+        #region Constructors
         public ModelBuilder(double size, int divide)
         {
-           // ModelVisual3D mv3d = new ModelVisual3D();
-           // Model3DGroup c = CreateBigCube(0, 0, 0, size);   //<ta 5 trzeba zmienic z aktualnym rozmiarem skanowanego modelu
-           // mv3d.Content = c;
-          //  this.mainViewport.Children.Add(mv3d);
+            // ModelVisual3D mv3d = new ModelVisual3D();
+            // Model3DGroup c = CreateBigCube(0, 0, 0, size);   //<ta 5 trzeba zmienic z aktualnym rozmiarem skanowanego modelu
+            // mv3d.Content = c;
+            //  this.mainViewport.Children.Add(mv3d);
 
 
             _modelCube = DividedCube(divide, CreateBigCube(0, 0, 0, size));
-           // Model3DGroup ourModel = CreatingModel(newCube);
+            // Model3DGroup ourModel = CreatingModel(newCube);
         }
-
-    
-        
-        //metoda tworzaca duzy szescian 
-        private Model3DGroup CreateBigCube(double X, double Y, double Z, double size)
-        {
-            Model3DGroup cube = new Model3DGroup();
-            MeshGeometry3D mesh = new MeshGeometry3D();
-            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z + size / 2));
-
-           // mesh.TriangleIndices.Add(new int[] { 3, 2, 6, 3, 6, 7, 2, 1, 5, 2, 5, 6, 1, 0, 4, 1, 4, 5, 0, 3, 7, 0, 7, 4, 7, 6, 5, 7, 5, 4, 2, 3, 0, 2, 0, 1 });
-           
-            
-            
-            ////front side triangles
-            //cube.Children.Add(CreateTriangleModel(p3, p2, p6));
-            //cube.Children.Add(CreateTriangleModel(p3, p6, p7));
-            ////right side triangles
-            //cube.Children.Add(CreateTriangleModel(p2, p1, p5));
-            //cube.Children.Add(CreateTriangleModel(p2, p5, p6));
-            ////back side triangles
-            //cube.Children.Add(CreateTriangleModel(p1, p0, p4));
-            //cube.Children.Add(CreateTriangleModel(p1, p4, p5));
-            ////left side triangles
-            //cube.Children.Add(CreateTriangleModel(p0, p3, p7));
-            //cube.Children.Add(CreateTriangleModel(p0, p7, p4));
-            ////top side triangles
-            //cube.Children.Add(CreateTriangleModel(p7, p6, p5));
-            //cube.Children.Add(CreateTriangleModel(p7, p5, p4));
-            ////bottom side triangles
-            //cube.Children.Add(CreateTriangleModel(p2, p3, p0));
-            //cube.Children.Add(CreateTriangleModel(p2, p0, p1));
-
-            Material material = new DiffuseMaterial(new SolidColorBrush(Colors.DarkKhaki));
-            GeometryModel3D model = new GeometryModel3D(mesh, material);
-            cube.Children.Add(model);
-            cube.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-2, -3, -1)));
-            return cube;
-        }
-
-        ///TO TRZEBA UZUPELNIC DANYMI Z KINECTA!!!!!! :)
-        public void CheckVerticesInCube(double angle)
-        {
-            //najpierw obracamy model o podany kąt
-            RotateTransform3D myRotateTransform3D = new RotateTransform3D();
-            AxisAngleRotation3D myAxisAngleRotation3d = new AxisAngleRotation3D();
-            myAxisAngleRotation3d.Axis = new Vector3D(0, 1, 0);
-            myAxisAngleRotation3d.Angle = angle;
-            myRotateTransform3D.Rotation = myAxisAngleRotation3d;
-            _modelCube.Cube.Transform = myRotateTransform3D;
-
-            //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
-            for (int j = 0; j < _modelCube.HexahedronsList.Count; j++)
-                for (int i = 0; i < _modelCube.HexahedronsList[j].Count; i++)
-                    if (_modelCube.HexahedronsList[j][i].Point == null)//!!!!!!!!!!!!!!!!!!! tutaj trzeba ten warunek czy wierzcholek jest trafiony czy nie na podstawie danych z bufora
-                        _modelCube.HexahedronsList[j][i].isChecked = false;
-        }
-        private CubeEx DividedCube(int divide, Model3DGroup cube)
-        {
-            double voxelWidth = cube.Bounds.SizeX / divide;
-            List<List<Point3DEx>> Cubevoxels = new List<List<Point3DEx>>();
-            List<List<Point3DEx>> tetraVoxelsTriangles = new List<List<Point3DEx>>();
-            List<List<Point3DEx>> tetraVoxelsVertices = new List<List<Point3DEx>>();
-            List<Point3DEx> tmp;
-
-            for (int i = 0; i < divide; i++)
-                for (int j = 0; j < divide; j++)
-                    for (int k = 0; k < divide; k++)
-                    {
-                        tmp = new List<Point3DEx>();
-                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
-                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
-                        Cubevoxels.Add(tmp);
-                    }
-
-
-            //kazdy z malych szescianow dzielimy na 5 czworoscianow
-            foreach (var c in Cubevoxels)
-            {
-                //lista z trojkatami szescianow
-                tetraVoxelsTriangles.Add(new List<Point3DEx>(new Point3DEx[] { c[3], c[2], c[6], c[2], c[1], c[6], c[3], c[2], c[1], c[3], c[6], c[1] }));
-                tetraVoxelsTriangles.Add(new List<Point3DEx>(new Point3DEx[] { c[1], c[5], c[6], c[1], c[4], c[5], c[5], c[4], c[6], c[1], c[4], c[6] }));
-                tetraVoxelsTriangles.Add(new List<Point3DEx>(new Point3DEx[] { c[3], c[6], c[7], c[3], c[7], c[4], c[7], c[6], c[4], c[3], c[6], c[4] }));
-                tetraVoxelsTriangles.Add(new List<Point3DEx>(new Point3DEx[] { c[0], c[3], c[4], c[0], c[1], c[4], c[0], c[3], c[1], c[4], c[3], c[1] }));
-                tetraVoxelsTriangles.Add(new List<Point3DEx>(new Point3DEx[] { c[4], c[3], c[1], c[3], c[6], c[1], c[1], c[6], c[4], c[3], c[6], c[4] }));
-
-                //lista z wierzcholkami szescianow
-                tetraVoxelsVertices.Add(new List<Point3DEx>(new Point3DEx[] { c[6], c[3], c[2], c[1] }));
-                tetraVoxelsVertices.Add(new List<Point3DEx>(new Point3DEx[] { c[1], c[4], c[5], c[6] }));
-                tetraVoxelsVertices.Add(new List<Point3DEx>(new Point3DEx[] { c[3], c[6], c[7], c[4] }));
-                tetraVoxelsVertices.Add(new List<Point3DEx>(new Point3DEx[] { c[4], c[1], c[0], c[3] }));
-                tetraVoxelsVertices.Add(new List<Point3DEx>(new Point3DEx[] { c[1], c[3], c[4], c[6] }));
-            }
-
-            CubeEx myCube = new CubeEx(cube);
-            myCube.HexahedronsList = Cubevoxels;
-            myCube.TetrahedronsList = tetraVoxelsVertices;
-            return myCube;
-        }
-        public Model3DGroup CreatingModel()
-        {
-            MeshGeometry3D mesh = new MeshGeometry3D();
-            List<Point3D> meshVertices = new List<Point3D>();
-            foreach (var t in _modelCube.TetrahedronsList)
-                foreach (var point in MarchingTetrahedrons(t))
-                    mesh.Positions.Add(point);
-
-            for (int i = 0; i < mesh.Positions.Count; i += 3)
-            {
-                mesh.TriangleIndices.Add(i);
-                mesh.TriangleIndices.Add(i + 1);
-                mesh.TriangleIndices.Add(i + 2);
-            }
-
-            Material material = new DiffuseMaterial(
-                new SolidColorBrush(Colors.DarkKhaki));
-            GeometryModel3D model = new GeometryModel3D(
-                mesh, material);
-            Model3DGroup group = new Model3DGroup();
-            group.Children.Add(model);
-            return group;
-        }
+        #endregion Constructors
+        #region Private Methods
         private List<Point3D> MarchingTetrahedrons(List<Point3DEx> tetrahedron)
         {
             int index = 0;
             for (int i = 0; i < 4; ++i)
-                if (tetrahedron[i].isChecked)
+                if (tetrahedron[i].IsChecked)
                     index |= (1 << i);
             List<Point3D> newPoints = new List<Point3D>();
             switch (index)
@@ -295,7 +167,6 @@ namespace ModelCreator.ViewModel
             }
             return newPoints;
         }
-
         private Point3D CalculateVert(Point3D p1, Point3D p2, double isolevel)
         {
             double v1 = Math.Sqrt(p1.X * p1.X + p1.Y * p1.Y + p1.Z * p1.Z);
@@ -331,26 +202,186 @@ namespace ModelCreator.ViewModel
 
             return new Point3D(x, y, z);
         }
-    }
-    class CubeEx
-    {
-        public List<List<Point3DEx>> TetrahedronsList { get; set; }
-        public List<List<Point3DEx>> HexahedronsList { get; set; }
-        public Model3DGroup Cube { get; private set; }
-        public CubeEx(Model3DGroup cube)
+        //metoda tworzaca duzy szescian 
+        private Model3DGroup CreateBigCube(double X, double Y, double Z, double size)
         {
-            Cube = cube;
-        }
-    }
+            Model3DGroup cube = new Model3DGroup();
+            MeshGeometry3D mesh = new MeshGeometry3D();
+            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z - size / 2));
+            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z - size / 2));
+            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z + size / 2));
+            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z + size / 2));
+            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z - size / 2));
+            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z - size / 2));
+            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z + size / 2));
+            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z + size / 2));
 
-    class Point3DEx
-    {
-        public Point3D Point { get; private set; }
-        public bool isChecked { get; set; }
-        public Point3DEx(double x, double y, double z)
-        {
-            Point = new Point3D(x, y, z);
-            isChecked = true;
+            // mesh.TriangleIndices.Add(new int[] { 3, 2, 6, 3, 6, 7, 2, 1, 5, 2, 5, 6, 1, 0, 4, 1, 4, 5, 0, 3, 7, 0, 7, 4, 7, 6, 5, 7, 5, 4, 2, 3, 0, 2, 0, 1 });
+
+
+
+            ////front side triangles
+            //cube.Children.Add(CreateTriangleModel(p3, p2, p6));
+            //cube.Children.Add(CreateTriangleModel(p3, p6, p7));
+            ////right side triangles
+            //cube.Children.Add(CreateTriangleModel(p2, p1, p5));
+            //cube.Children.Add(CreateTriangleModel(p2, p5, p6));
+            ////back side triangles
+            //cube.Children.Add(CreateTriangleModel(p1, p0, p4));
+            //cube.Children.Add(CreateTriangleModel(p1, p4, p5));
+            ////left side triangles
+            //cube.Children.Add(CreateTriangleModel(p0, p3, p7));
+            //cube.Children.Add(CreateTriangleModel(p0, p7, p4));
+            ////top side triangles
+            //cube.Children.Add(CreateTriangleModel(p7, p6, p5));
+            //cube.Children.Add(CreateTriangleModel(p7, p5, p4));
+            ////bottom side triangles
+            //cube.Children.Add(CreateTriangleModel(p2, p3, p0));
+            //cube.Children.Add(CreateTriangleModel(p2, p0, p1));
+
+            Material material = new DiffuseMaterial(new SolidColorBrush(Colors.DarkKhaki));
+            GeometryModel3D model = new GeometryModel3D(mesh, material);
+            cube.Children.Add(model);
+            cube.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-2, -3, -1)));
+            return cube;
         }
+        private CubeEx DividedCube(int divide, Model3DGroup cube)
+        {
+            double voxelWidth = cube.Bounds.SizeX / divide;
+            List<List<Point3DEx>> cubevoxels = new List<List<Point3DEx>>();
+            List<List<Point3DEx>> tetraVoxelsTriangles = new List<List<Point3DEx>>();
+            List<List<Point3DEx>> tetraVoxelsVertices = new List<List<Point3DEx>>();
+            List<Point3DEx> tmp;
+
+            for (int i = 0; i < divide; i++)
+                for (int j = 0; j < divide; j++)
+                    for (int k = 0; k < divide; k++)
+                    {
+                        tmp = new List<Point3DEx>();
+                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
+                        tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
+                        cubevoxels.Add(tmp);
+                    }
+
+
+            //kazdy z malych szescianow dzielimy na 5 czworoscianow
+            foreach (var c in cubevoxels)
+            {
+                //lista z trojkatami szescianow
+                tetraVoxelsTriangles.Add(new List<Point3DEx>(new[] { c[3], c[2], c[6], c[2], c[1], c[6], c[3], c[2], c[1], c[3], c[6], c[1] }));
+                tetraVoxelsTriangles.Add(new List<Point3DEx>(new[] { c[1], c[5], c[6], c[1], c[4], c[5], c[5], c[4], c[6], c[1], c[4], c[6] }));
+                tetraVoxelsTriangles.Add(new List<Point3DEx>(new[] { c[3], c[6], c[7], c[3], c[7], c[4], c[7], c[6], c[4], c[3], c[6], c[4] }));
+                tetraVoxelsTriangles.Add(new List<Point3DEx>(new[] { c[0], c[3], c[4], c[0], c[1], c[4], c[0], c[3], c[1], c[4], c[3], c[1] }));
+                tetraVoxelsTriangles.Add(new List<Point3DEx>(new[] { c[4], c[3], c[1], c[3], c[6], c[1], c[1], c[6], c[4], c[3], c[6], c[4] }));
+
+                //lista z wierzcholkami szescianow
+                tetraVoxelsVertices.Add(new List<Point3DEx>(new[] { c[6], c[3], c[2], c[1] }));
+                tetraVoxelsVertices.Add(new List<Point3DEx>(new[] { c[1], c[4], c[5], c[6] }));
+                tetraVoxelsVertices.Add(new List<Point3DEx>(new[] { c[3], c[6], c[7], c[4] }));
+                tetraVoxelsVertices.Add(new List<Point3DEx>(new[] { c[4], c[1], c[0], c[3] }));
+                tetraVoxelsVertices.Add(new List<Point3DEx>(new[] { c[1], c[3], c[4], c[6] }));
+            }
+
+            CubeEx myCube = new CubeEx(cube);
+            myCube.HexahedronsList = cubevoxels;
+            myCube.TetrahedronsList = tetraVoxelsVertices;
+            return myCube;
+        }
+        private static int FindMidPixel(DepthImagePixel[] data, int midPixel)
+        {
+            for (int i = 0; i < data.Length / 2; i++)
+                if (data[midPixel + i].IsKnownDepth) return data[midPixel + i].Depth;
+                else if (data[midPixel - i].IsKnownDepth) return data[midPixel - i].Depth;
+            return 0;
+        }
+        #endregion Private Methods
+        #region Public Methods
+        /// <summary>
+        /// Fills the voksels with the data from depth stream from Kinect
+        /// </summary>
+        /// <param name="angle">The current rotation angle.</param>
+        /// <param name="data">The depth data from Kinect.</param>
+        public void CheckVerticesInCube(double angle, DepthImagePixel[] data)
+        {
+            //najpierw obracamy model o podany kąt
+            var myRotateTransform3D = new RotateTransform3D();
+            var myAxisAngleRotation3D = new AxisAngleRotation3D
+            {
+                Axis = new Vector3D(0, 1, 0),
+                Angle = angle
+            };
+            myRotateTransform3D.Rotation = myAxisAngleRotation3D;
+            _modelCube.Cube.Transform = myRotateTransform3D;
+
+            //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
+            for (int j = 0; j < _modelCube.HexahedronsList.Count; j++)
+                for (int i = 0; i < _modelCube.HexahedronsList[j].Count; i++)
+                    if (_modelCube.HexahedronsList[j][i].Point == null)//!!!!!!!!!!!!!!!!!!! tutaj trzeba ten warunek czy wierzcholek jest trafiony czy nie na podstawie danych z bufora
+                        _modelCube.HexahedronsList[j][i].IsChecked = false;
+        }
+        public Model3DGroup CreateModel()
+        {
+            MeshGeometry3D mesh = new MeshGeometry3D();
+            List<Point3D> meshVertices = new List<Point3D>();
+            foreach (var t in _modelCube.TetrahedronsList)
+                foreach (var point in MarchingTetrahedrons(t))
+                    mesh.Positions.Add(point);
+
+            for (int i = 0; i < mesh.Positions.Count; i += 3)
+            {
+                mesh.TriangleIndices.Add(i);
+                mesh.TriangleIndices.Add(i + 1);
+                mesh.TriangleIndices.Add(i + 2);
+            }
+
+            Material material = new DiffuseMaterial(
+                new SolidColorBrush(Colors.Chocolate));
+            GeometryModel3D model = new GeometryModel3D(
+                mesh, material);
+            Model3DGroup group = new Model3DGroup();
+            group.Children.Add(model);
+            return group;
+        }
+        /// <summary>
+        /// Gets the size of the model.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="stride">The stride.</param>
+        /// <returns>Model size in pixels</returns>
+        public static double GetModelSize(DepthImagePixel[] data, int stride)
+        {
+            var midPixel = data.Length / 2;
+            int leftDepth = FindMidPixel(data, midPixel);
+            var rightDepth = leftDepth;
+            int width = 1;
+
+            for (int j = 0; j < stride / 2; j++)
+            {
+                bool changed = false;
+                if (data[midPixel - j].IsKnownDepth && Math.Abs(data[midPixel - j].Depth - leftDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    leftDepth = data[midPixel - j].Depth;
+                    changed = true;
+                }
+                if (data[midPixel + j].IsKnownDepth && Math.Abs(data[midPixel + j].Depth - rightDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    rightDepth = data[midPixel + j].Depth;
+                    changed = true;
+                }
+                if (!changed && (data[midPixel + j].IsKnownDepth || data[midPixel - j].IsKnownDepth))
+                    break;
+            }
+
+            return 2 * width;
+        }
+        #endregion Public Methods
     }
 }

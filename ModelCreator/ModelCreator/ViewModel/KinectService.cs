@@ -21,6 +21,8 @@ namespace ModelCreator.ViewModel
         private double _imageWidth;
         private double _imageHeight;
         private string _errorGridMessage;
+        private DepthImagePixel[] _depthData;
+        private readonly object _depthDataMutex = new object();
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -198,29 +200,32 @@ namespace ModelCreator.ViewModel
         {
             using (var depthFrame = e.OpenDepthImageFrame())
             {
-                if (depthFrame == null || depthFrame.PixelDataLength == 0)
-                    return;
-                var depthImage = new DepthImagePixel[depthFrame.PixelDataLength];
-                depthFrame.CopyDepthImagePixelDataTo(depthImage);
-
-                // Get the min and max reliable depth for the current frame
-                int minDepth = depthFrame.MinDepth;
-                int maxDepth = depthFrame.MaxDepth;
-
-                // Convert the depth to grayscale
-                int colorPixelIndex = 0;
-                byte[] colorPixels = new byte[depthImage.Length * 2];
-                for (int i = 0; i < depthImage.Length; ++i)
+                lock (_depthDataMutex)
                 {
-                    short depth = depthImage[i].Depth;
-                    byte intensity = (byte)(Math.Max(Math.Min(depth, maxDepth), minDepth));
+                    if (depthFrame == null || depthFrame.PixelDataLength == 0)
+                        return;
+                    _depthData = new DepthImagePixel[depthFrame.PixelDataLength];
+                    depthFrame.CopyDepthImagePixelDataTo(_depthData);
 
-                    colorPixels[colorPixelIndex++] = intensity;
-                    colorPixels[colorPixelIndex++] = intensity;
+                    // Get the min and max reliable depth for the current frame
+                    int minDepth = depthFrame.MinDepth;
+                    int maxDepth = depthFrame.MaxDepth;
+
+                    // Convert the depth to grayscale
+                    int colorPixelIndex = 0;
+                    byte[] colorPixels = new byte[_depthData.Length * 2];
+                    for (int i = 0; i < _depthData.Length; ++i)
+                    {
+                        short depth = _depthData[i].Depth;
+                        byte intensity = (byte)(Math.Max(Math.Min(depth, maxDepth), minDepth));
+
+                        colorPixels[colorPixelIndex++] = intensity;
+                        colorPixels[colorPixelIndex++] = intensity;
+                    }
+
+                    KinectDepthImage.WritePixels(_depthSourceBounds, colorPixels, _depthStride, 0);
+                    OnPropertyChanged("KinectDepthImage");
                 }
-
-                KinectDepthImage.WritePixels(_depthSourceBounds, colorPixels, _depthStride, 0);
-                OnPropertyChanged("KinectDepthImage");
             }
         }
         /// <summary>
@@ -312,6 +317,20 @@ namespace ModelCreator.ViewModel
         public void Cleanup()
         {
             Kinect = null;
+        }
+        /// <summary>
+        /// Gets the depth data.
+        /// </summary>
+        /// <returns>The array of depth data</returns>
+        public DepthImagePixel[] GetDepthData()
+        {
+            DepthImagePixel[] data;
+            lock (_depthDataMutex)
+            {
+                data = new DepthImagePixel[_depthData.Length];
+                _depthData.CopyTo(data, 0);
+            }
+            return data;
         }
         #endregion Public Methods
     }

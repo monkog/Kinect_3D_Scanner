@@ -1,6 +1,8 @@
 ﻿
 using Microsoft.Practices.Prism.Commands;
 using System.Windows.Input;
+using System.Windows.Media.Media3D;
+using Microsoft.Kinect;
 
 namespace ModelCreator.ViewModel
 {
@@ -12,9 +14,9 @@ namespace ModelCreator.ViewModel
         #region Private Fields
         private readonly KinectService _kinectService;
         private ModelBuilder _builder;
-        private double _modelSize;
         private double _rotationAngle;
         private double _currentRotation;
+        private Model3DGroup _model;
         private const double FullRotationAngle = 360;
         private const int CubeDivide = 5;
         #endregion Private Fields
@@ -55,13 +57,18 @@ namespace ModelCreator.ViewModel
         /// <summary>
         /// Gets or sets model bigest size.
         /// </summary>
-        public double ModelSize
+        public double ModelSize { get; set; }
+        /// <summary>
+        /// Gets or sets the created model.
+        /// </summary>
+        public Model3DGroup Model
         {
-            get { return _modelSize; }
+            get { return _model; }
             set
             {
-                if (_modelSize == value) return;
-                _modelSize = value;
+                if (_model == value) return;
+                _model = value;
+                OnPropertyChanged("Model");
             }
         }
         #endregion Public Properties
@@ -74,11 +81,8 @@ namespace ModelCreator.ViewModel
         {
             RotationAngle = 30;
             CurrentRotation = 0;
-            ModelSize = 20; //to trzeba jakos zczytac :)
             _kinectService = kinectService;
             _kinectService.Initialize();
-
-            _builder = new ModelBuilder(ModelSize, CubeDivide);
         }
         #endregion .ctor
         #region Commands
@@ -98,26 +102,21 @@ namespace ModelCreator.ViewModel
         /// </summary>
         public void CaptureExecuted()
         {
-            CurrentRotation = (CurrentRotation + RotationAngle) % FullRotationAngle;
-            _builder.CheckVerticesInCube(CurrentRotation);
-        }
-        /// <summary>
-        /// The command, executed after clicking on build button
-        /// </summary>
-        private ICommand _buildCommand;
-        /// <summary>
-        /// Gets the command.
-        /// </summary>
-        public ICommand BuildCommand
-        {
-            get { return _buildCommand ?? (_buildCommand = new DelegateCommand(BuildExecuted)); }
-        }
-        /// <summary>
-        /// Executes when build button was hit.
-        /// </summary>
-        public void BuildExecuted()
-        {
-            _builder.CreatingModel();
+            DepthImagePixel[] data = KinectService.GetDepthData();
+            if (_builder == null)
+            {
+                ModelSize = ModelBuilder.GetModelSize(data, KinectService.KinectDepthImage.PixelWidth);
+                _builder = new ModelBuilder(ModelSize, CubeDivide);
+            }
+
+            _builder.CheckVerticesInCube(CurrentRotation, data);
+            CurrentRotation = CurrentRotation + RotationAngle;
+
+            if (CurrentRotation == FullRotationAngle)
+            {
+                CurrentRotation = 0;
+                Model = _builder.CreateModel();
+            }
         }
         #endregion Commands
     }

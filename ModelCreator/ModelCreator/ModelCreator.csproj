@@ -87,6 +87,8 @@
     <Compile Include="Converters\IncreasedValueConverter.cs" />
     <Compile Include="Converters\ReducedValueConverter.cs" />
     <Compile Include="Converters\ValueToVisibilityConverter.cs" />
+    <Compile Include="Model\CubeEx.cs" />
+    <Compile Include="Model\PointEx.cs" />
     <Compile Include="ViewModel\IKinectService.cs" />
     <Compile Include="ViewModel\KinectService.cs" />
     <Compile Include="ViewModel\KinectViewModel.cs" />
@@ -137,9 +139,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Model\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Resource Include="Resources\camera.png" />
   </ItemGroup>
