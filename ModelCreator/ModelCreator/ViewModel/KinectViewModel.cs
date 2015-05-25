@@ -1,8 +1,8 @@
-﻿
-using Microsoft.Practices.Prism.Commands;
+﻿using Microsoft.Practices.Prism.Commands;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 using Microsoft.Kinect;
+using ModelCreator.View;
 
 namespace ModelCreator.ViewModel
 {
@@ -16,7 +16,6 @@ namespace ModelCreator.ViewModel
         private ModelBuilder _builder;
         private double _rotationAngle;
         private double _currentRotation;
-        private Model3DGroup _model;
         private const double FullRotationAngle = 360;
         private const int CubeDivide = 5;
         #endregion Private Fields
@@ -58,19 +57,6 @@ namespace ModelCreator.ViewModel
         /// Gets or sets model bigest size.
         /// </summary>
         public double ModelSize { get; set; }
-        /// <summary>
-        /// Gets or sets the created model.
-        /// </summary>
-        public Model3DGroup Model
-        {
-            get { return _model; }
-            set
-            {
-                if (_model == value) return;
-                _model = value;
-                OnPropertyChanged("Model");
-            }
-        }
         #endregion Public Properties
         #region .ctor
         /// <summary>
@@ -79,7 +65,7 @@ namespace ModelCreator.ViewModel
         /// <param name="kinectService">The kinect service.</param>
         public KinectViewModel(KinectService kinectService)
         {
-            RotationAngle = 30;
+            RotationAngle = 90;
             CurrentRotation = 0;
             _kinectService = kinectService;
             _kinectService.Initialize();
@@ -109,13 +95,15 @@ namespace ModelCreator.ViewModel
                 _builder = new ModelBuilder(ModelSize, CubeDivide);
             }
 
-            _builder.CheckVerticesInCube(CurrentRotation, data);
+            _builder.CheckVerticesInCube((int)CurrentRotation, data);
             CurrentRotation = CurrentRotation + RotationAngle;
 
             if (CurrentRotation == FullRotationAngle)
             {
                 CurrentRotation = 0;
-                Model = _builder.CreateModel();
+                var modelWindow = new ModelWindow();
+                modelWindow.DataContext = new ModelWindowViewModel(_builder.CreateModel());
+                modelWindow.Show();
             }
         }
         #endregion Commands

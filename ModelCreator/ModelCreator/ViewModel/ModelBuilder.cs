@@ -251,13 +251,13 @@ namespace ModelCreator.ViewModel
             List<List<Point3DEx>> cubevoxels = new List<List<Point3DEx>>();
             List<List<Point3DEx>> tetraVoxelsTriangles = new List<List<Point3DEx>>();
             List<List<Point3DEx>> tetraVoxelsVertices = new List<List<Point3DEx>>();
-            List<Point3DEx> tmp;
+            var hexahedrons = new List<Point3DEx>[divide, divide, divide];
 
             for (int i = 0; i < divide; i++)
                 for (int j = 0; j < divide; j++)
                     for (int k = 0; k < divide; k++)
                     {
-                        tmp = new List<Point3DEx>();
+                        List<Point3DEx> tmp = new List<Point3DEx>();
                         tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
                         tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth - voxelWidth / 2));
                         tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth - voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
@@ -267,6 +267,7 @@ namespace ModelCreator.ViewModel
                         tmp.Add(new Point3DEx(i * voxelWidth + voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
                         tmp.Add(new Point3DEx(i * voxelWidth - voxelWidth / 2, j * voxelWidth + voxelWidth / 2, k * voxelWidth + voxelWidth / 2));
                         cubevoxels.Add(tmp);
+                        hexahedrons[i, j, k] = tmp;
                     }
 
 
@@ -289,7 +290,7 @@ namespace ModelCreator.ViewModel
             }
 
             CubeEx myCube = new CubeEx(cube);
-            myCube.HexahedronsList = cubevoxels;
+            myCube.Hexahedrons = hexahedrons;
             myCube.TetrahedronsList = tetraVoxelsVertices;
             return myCube;
         }
@@ -300,14 +301,44 @@ namespace ModelCreator.ViewModel
                 else if (data[midPixel - i].IsKnownDepth) return data[midPixel - i].Depth;
             return 0;
         }
+        public void SelectModelPoints(DepthImagePixel[] data, int stride)
+        {
+            var midPixel = data.Length / 2;
+            int leftDepth = FindMidPixel(data, midPixel);
+            var rightDepth = leftDepth;
+            int width = 1;
+
+            for (int j = 0; j < stride / 2; j++)
+            {
+                bool changed = false;
+                if (data[midPixel - j].IsKnownDepth && Math.Abs(data[midPixel - j].Depth - leftDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    leftDepth = data[midPixel - j].Depth;
+                    changed = true;
+                }
+                if (data[midPixel + j].IsKnownDepth && Math.Abs(data[midPixel + j].Depth - rightDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    rightDepth = data[midPixel + j].Depth;
+                    changed = true;
+                }
+                if (!changed && (data[midPixel + j].IsKnownDepth || data[midPixel - j].IsKnownDepth))
+                    break;
+            }
+        }
+        private void GetMinMaxValues(out int min, out int max)
+        {
+            throw new NotImplementedException();
+        }
         #endregion Private Methods
         #region Public Methods
         /// <summary>
         /// Fills the voksels with the data from depth stream from Kinect
         /// </summary>
         /// <param name="angle">The current rotation angle.</param>
-        /// <param name="data">The depth data from Kinect.</param>
-        public void CheckVerticesInCube(double angle, DepthImagePixel[] data)
+        /// <param name="rawData">The depth data from Kinect.</param>
+        public void CheckVerticesInCube(int angle, DepthImagePixel[] rawData)
         {
             //najpierw obracamy model o podany kąt
             var myRotateTransform3D = new RotateTransform3D();
@@ -319,11 +350,35 @@ namespace ModelCreator.ViewModel
             myRotateTransform3D.Rotation = myAxisAngleRotation3D;
             _modelCube.Cube.Transform = myRotateTransform3D;
 
-            //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
-            for (int j = 0; j < _modelCube.HexahedronsList.Count; j++)
-                for (int i = 0; i < _modelCube.HexahedronsList[j].Count; i++)
-                    if (_modelCube.HexahedronsList[j][i].Point == null)//!!!!!!!!!!!!!!!!!!! tutaj trzeba ten warunek czy wierzcholek jest trafiony czy nie na podstawie danych z bufora
-                        _modelCube.HexahedronsList[j][i].IsChecked = false;
+            DepthImagePixel[,] data = new DepthImagePixel[640, 480];
+            for (int j = 0; j < 480; j++)
+                for (int i = 0; i < 640; i++)
+                    data[i, j] = rawData[j * 640 + i];
+            int startIndex = 640 / 2 - (int)(_modelCube.Cube.Bounds.SizeX / 2);
+            int step = (int)_modelCube.Cube.Bounds.SizeX / _modelCube.Hexahedrons.GetLength(0);
+
+            switch (angle)
+            {
+                case 0:
+                    //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                                if (data[startIndex + i * step, startIndex + j * step].IsKnownDepth && data[startIndex + i * step, startIndex + j * step].Depth < 1200)
+                                {
+                                    var list = _modelCube.Hexahedrons[i, j, k];
+                                    //foreach (var point in list)
+                                    for (int g = 0; g < 2; g++)
+                                        list[g].IsChecked = false;
+                                }
+                    break;
+                case 90:
+                    break;
+                case 180:
+                    break;
+                case 270:
+                    break;
+            }
         }
         public Model3DGroup CreateModel()
         {
@@ -359,6 +414,8 @@ namespace ModelCreator.ViewModel
             var midPixel = data.Length / 2;
             int leftDepth = FindMidPixel(data, midPixel);
             var rightDepth = leftDepth;
+            var topDepth = leftDepth;
+            var bottomDepth = leftDepth;
             int width = 1;
 
             for (int j = 0; j < stride / 2; j++)
@@ -374,6 +431,18 @@ namespace ModelCreator.ViewModel
                 {
                     width = j + 1;
                     rightDepth = data[midPixel + j].Depth;
+                    changed = true;
+                }
+                if (midPixel + (j * stride) < data.Length && data[midPixel + (j * stride)].IsKnownDepth && Math.Abs(data[midPixel + (j * stride)].Depth - rightDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    bottomDepth = data[midPixel + (j * stride)].Depth;
+                    changed = true;
+                }
+                if (midPixel - (j * stride) >= 0 && data[midPixel - (j * stride)].IsKnownDepth && Math.Abs(data[midPixel - (j * stride)].Depth - rightDepth) < Tolerance)
+                {
+                    width = j + 1;
+                    topDepth = data[midPixel - (j * stride)].Depth;
                     changed = true;
                 }
                 if (!changed && (data[midPixel + j].IsKnownDepth || data[midPixel - j].IsKnownDepth))
