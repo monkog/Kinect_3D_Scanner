@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using Microsoft.Kinect;
 using ModelCreator.Model;
@@ -13,7 +12,6 @@ namespace ModelCreator.ViewModel
         #region Private Members
         private CubeEx _modelCube;
         private const int Tolerance = 50;
-        private Random rand = new Random();
         #endregion Private Members
         #region Constructors
         public ModelBuilder(double size, int divide)
@@ -342,7 +340,6 @@ namespace ModelCreator.ViewModel
         /// <param name="f">The focal length for Kinect</param>
         public void CheckVerticesInCube(int angle, DepthImagePixel[] rawData, float f)
         {
-            //najpierw obracamy model o podany kąt
             var myRotateTransform3D = new RotateTransform3D();
             var myAxisAngleRotation3D = new AxisAngleRotation3D
             {
@@ -356,8 +353,6 @@ namespace ModelCreator.ViewModel
             for (int j = 0; j < 480; j++)
                 for (int i = 0; i < 640; i++)
                     data[i, j] = rawData[j * 640 + i];
-            //int startIndex = 640 / 2 - (int)(_modelCube.Cube.Bounds.SizeX / 2);
-            //int step = (int)_modelCube.Cube.Bounds.SizeX / _modelCube.Hexahedrons.GetLength(0);
 
             switch (angle)
             {
@@ -371,7 +366,7 @@ namespace ModelCreator.ViewModel
                                 {
                                     int x = (int)(point.Point.X / point.Point.Z * f);
                                     int y = (int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
                                         point.IsChecked = false;
                                 }
                             }
@@ -386,7 +381,7 @@ namespace ModelCreator.ViewModel
                                 {
                                     int x = (int)(point.Point.Z / (-point.Point.X) * f);
                                     int y = (int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
                                         point.IsChecked = false;
                                 }
                             }
@@ -401,7 +396,7 @@ namespace ModelCreator.ViewModel
                                 {
                                     int x = (int)(point.Point.X / point.Point.Z * f);
                                     int y = -(int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
                                         point.IsChecked = false;
                                 }
                             }
@@ -416,7 +411,7 @@ namespace ModelCreator.ViewModel
                                 {
                                     int x = -(int)(point.Point.Z / point.Point.X * f);
                                     int y = (int)(point.Point.Y / point.Point.X * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
                                         point.IsChecked = false;
                                 }
                             }
@@ -426,7 +421,6 @@ namespace ModelCreator.ViewModel
         public Model3DGroup CreateModel()
         {
             MeshGeometry3D mesh = new MeshGeometry3D();
-            List<Point3D> meshVertices = new List<Point3D>();
             foreach (var t in _modelCube.TetrahedronsList)
                 foreach (var point in MarchingTetrahedrons(t))
                     mesh.Positions.Add(point);
@@ -440,8 +434,7 @@ namespace ModelCreator.ViewModel
 
             Material material = new DiffuseMaterial(
                 new SolidColorBrush(Colors.Chocolate));
-            GeometryModel3D model = new GeometryModel3D(
-                mesh, material);
+            GeometryModel3D model = new GeometryModel3D(mesh, material);
             Model3DGroup group = new Model3DGroup();
             group.Children.Add(model);
             return group;

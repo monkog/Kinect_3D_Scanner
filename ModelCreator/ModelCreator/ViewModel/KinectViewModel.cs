@@ -16,7 +16,7 @@ namespace ModelCreator.ViewModel
         private double _rotationAngle;
         private double _currentRotation;
         private const double FullRotationAngle = 360;
-        private const int CubeDivide = 55;
+        private const int CubeDivide = 5;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
