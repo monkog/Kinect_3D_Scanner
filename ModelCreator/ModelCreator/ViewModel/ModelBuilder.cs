@@ -12,7 +12,8 @@ namespace ModelCreator.ViewModel
     {
         #region Private Members
         private CubeEx _modelCube;
-        private const int Tolerance = 100;
+        private const int Tolerance = 50;
+        private Random rand = new Random();
         #endregion Private Members
         #region Constructors
         public ModelBuilder(double size, int divide)
@@ -338,7 +339,8 @@ namespace ModelCreator.ViewModel
         /// </summary>
         /// <param name="angle">The current rotation angle.</param>
         /// <param name="rawData">The depth data from Kinect.</param>
-        public void CheckVerticesInCube(int angle, DepthImagePixel[] rawData)
+        /// <param name="f">The focal length for Kinect</param>
+        public void CheckVerticesInCube(int angle, DepthImagePixel[] rawData, float f)
         {
             //najpierw obracamy model o podany kąt
             var myRotateTransform3D = new RotateTransform3D();
@@ -354,29 +356,70 @@ namespace ModelCreator.ViewModel
             for (int j = 0; j < 480; j++)
                 for (int i = 0; i < 640; i++)
                     data[i, j] = rawData[j * 640 + i];
-            int startIndex = 640 / 2 - (int)(_modelCube.Cube.Bounds.SizeX / 2);
-            int step = (int)_modelCube.Cube.Bounds.SizeX / _modelCube.Hexahedrons.GetLength(0);
+            //int startIndex = 640 / 2 - (int)(_modelCube.Cube.Bounds.SizeX / 2);
+            //int step = (int)_modelCube.Cube.Bounds.SizeX / _modelCube.Hexahedrons.GetLength(0);
 
             switch (angle)
             {
                 case 0:
-                    //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
-                    //for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                    //    for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                    //        for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                    //            if (data[startIndex + i * step, startIndex + j * step].IsKnownDepth && data[startIndex + i * step, startIndex + j * step].Depth < 1200)
-                    //            {
-                    //                var list = _modelCube.Hexahedrons[i, j, k];
-                    //                //foreach (var point in list)
-                    //                for (int g = 0; g < 2; g++)
-                    //                    list[g].IsChecked = false;
-                    //            }
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                            {
+                                var list = _modelCube.Hexahedrons[i, j, k];
+                                foreach (var point in list)
+                                {
+                                    int x = (int)(point.Point.X / point.Point.Z * f);
+                                    int y = (int)(point.Point.Y / point.Point.Z * f);
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                        point.IsChecked = false;
+                                }
+                            }
                     break;
                 case 90:
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                            {
+                                var list = _modelCube.Hexahedrons[i, j, k];
+                                foreach (var point in list)
+                                {
+                                    int x = (int)(point.Point.Z / (-point.Point.X) * f);
+                                    int y = (int)(point.Point.Y / point.Point.Z * f);
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                        point.IsChecked = false;
+                                }
+                            }
                     break;
                 case 180:
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                            {
+                                var list = _modelCube.Hexahedrons[i, j, k];
+                                foreach (var point in list)
+                                {
+                                    int x = (int)(point.Point.X / point.Point.Z * f);
+                                    int y = -(int)(point.Point.Y / point.Point.Z * f);
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                        point.IsChecked = false;
+                                }
+                            }
                     break;
                 case 270:
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                            {
+                                var list = _modelCube.Hexahedrons[i, j, k];
+                                foreach (var point in list)
+                                {
+                                    int x = -(int)(point.Point.Z / point.Point.X * f);
+                                    int y = (int)(point.Point.Y / point.Point.X * f);
+                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth > 1000)
+                                        point.IsChecked = false;
+                                }
+                            }
                     break;
             }
         }
@@ -433,19 +476,19 @@ namespace ModelCreator.ViewModel
                     rightDepth = data[midPixel + j].Depth;
                     changed = true;
                 }
-                if (midPixel + (j * stride) < data.Length && data[midPixel + (j * stride)].IsKnownDepth && Math.Abs(data[midPixel + (j * stride)].Depth - rightDepth) < Tolerance)
-                {
-                    width = j + 1;
-                    bottomDepth = data[midPixel + (j * stride)].Depth;
-                    changed = true;
-                }
-                if (midPixel - (j * stride) >= 0 && data[midPixel - (j * stride)].IsKnownDepth && Math.Abs(data[midPixel - (j * stride)].Depth - rightDepth) < Tolerance)
-                {
-                    width = j + 1;
-                    topDepth = data[midPixel - (j * stride)].Depth;
-                    changed = true;
-                }
-                if (!changed && (data[midPixel + j].IsKnownDepth || data[midPixel - j].IsKnownDepth))
+                //if (midPixel + (j * stride) < data.Length && data[midPixel + (j * stride)].IsKnownDepth && Math.Abs(data[midPixel + (j * stride)].Depth - bottomDepth) < Tolerance)
+                //{
+                //    width = j + 1;
+                //    bottomDepth = data[midPixel + (j * stride)].Depth;
+                //    changed = true;
+                //}
+                //if (midPixel - (j * stride) >= 0 && data[midPixel - (j * stride)].IsKnownDepth && Math.Abs(data[midPixel - (j * stride)].Depth - topDepth) < Tolerance)
+                //{
+                //    width = j + 1;
+                //    topDepth = data[midPixel - (j * stride)].Depth;
+                //    changed = true;
+                //}
+                if (!changed && (data[midPixel + j].IsKnownDepth || data[midPixel - j].IsKnownDepth || data[midPixel - (j * stride)].IsKnownDepth || data[midPixel + (j * stride)].IsKnownDepth))
                     break;
             }
 

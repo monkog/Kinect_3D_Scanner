@@ -16,7 +16,7 @@ namespace ModelCreator.ViewModel
         private double _rotationAngle;
         private double _currentRotation;
         private const double FullRotationAngle = 360;
-        private const int CubeDivide = 5;
+        private const int CubeDivide = 55;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -94,7 +94,7 @@ namespace ModelCreator.ViewModel
                 _builder = new ModelBuilder(ModelSize, CubeDivide);
             }
 
-            _builder.CheckVerticesInCube((int)CurrentRotation, data);
+            _builder.CheckVerticesInCube((int)CurrentRotation, data, KinectService.Kinect.DepthStream.NominalFocalLengthInPixels);
             CurrentRotation = CurrentRotation + RotationAngle;
 
             if (CurrentRotation == FullRotationAngle)
