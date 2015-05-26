@@ -361,16 +361,16 @@ namespace ModelCreator.ViewModel
             {
                 case 0:
                     //sprawdzamy kazdy z wierzcholkow podzielonego szescianu
-                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                                if (data[startIndex + i * step, startIndex + j * step].IsKnownDepth && data[startIndex + i * step, startIndex + j * step].Depth < 1200)
-                                {
-                                    var list = _modelCube.Hexahedrons[i, j, k];
-                                    //foreach (var point in list)
-                                    for (int g = 0; g < 2; g++)
-                                        list[g].IsChecked = false;
-                                }
+                    //for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                    //    for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                    //        for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                    //            if (data[startIndex + i * step, startIndex + j * step].IsKnownDepth && data[startIndex + i * step, startIndex + j * step].Depth < 1200)
+                    //            {
+                    //                var list = _modelCube.Hexahedrons[i, j, k];
+                    //                //foreach (var point in list)
+                    //                for (int g = 0; g < 2; g++)
+                    //                    list[g].IsChecked = false;
+                    //            }
                     break;
                 case 90:
                     break;

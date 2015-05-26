@@ -4,14 +4,14 @@
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:eventCommand="clr-namespace:ModelCreator.View"
         Title="3D Model" Height="600" Width="600">
+    <i:Interaction.Behaviors>
+        <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseClickCommand}" Event="MouseLeftButtonDown" PassArguments="True" />
+        <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseUpCommand}" Event="MouseLeftButtonUp" PassArguments="True" />
+        <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseMoveCommand}" Event="MouseMove" PassArguments="True" />
+        <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseWheelCommand}" Event="MouseWheel" PassArguments="True" />
+    </i:Interaction.Behaviors>
     <!--3D control-->
     <Viewport3D>
-        <i:Interaction.Behaviors>
-            <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseClickCommand}" Event="MouseLeftButtonDown" PassArguments="True" />
-            <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseUpCommand}" Event="MouseLeftButtonUp" PassArguments="True" />
-            <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseMoveCommand}" Event="MouseMove" PassArguments="True" />
-            <eventCommand:EventToCommandBehavior Command="{Binding Path=MouseWheelCommand}" Event="MouseWheel" PassArguments="True" />
-        </i:Interaction.Behaviors>
         <Viewport3D.Camera>
             <!--<OrthographicCamera Position="0, 0, 10" LookDirection="0, 0, -10" UpDirection="0, 1, 0"/>-->
             <PerspectiveCamera Position="-40,40,400" LookDirection="40,-40,-400" UpDirection="0,0,1" Transform="{Binding CameraTransform}"/>

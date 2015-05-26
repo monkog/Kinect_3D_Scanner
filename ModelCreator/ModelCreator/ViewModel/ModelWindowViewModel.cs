@@ -71,7 +71,7 @@ namespace ModelCreator.ViewModel
         /// </summary>
         private void MouseClickExecuted(MouseButtonEventArgs args)
         {
-            _mouseCurrentPosition = args.GetPosition((Viewport3D)args.OriginalSource);
+            _mouseCurrentPosition = args.GetPosition((IInputElement)args.OriginalSource);
             _isMouseDown = true;
         }
 
@@ -106,13 +106,15 @@ namespace ModelCreator.ViewModel
         /// </summary>
         private void MouseMoveExecuted(MouseEventArgs args)
         {
-            if (!_isMouseDown || !(args.OriginalSource.GetType() == typeof(Viewport3D))) return;
+            if (!_isMouseDown) return;
             _mousePreviousPosition = _mouseCurrentPosition;
-            _mouseCurrentPosition = args.GetPosition((Viewport3D)args.OriginalSource);
+            _mouseCurrentPosition = args.GetPosition((IInputElement)args.OriginalSource);
 
-            _mouseDelta = new Point((_mouseCurrentPosition.X - _mousePreviousPosition.X) / 50, (_mouseCurrentPosition.Y - _mousePreviousPosition.Y) / 50);
+            _mouseDelta = new Point((_mouseCurrentPosition.X - _mousePreviousPosition.X), (_mouseCurrentPosition.Y - _mousePreviousPosition.Y));
 
             var transform = new Transform3DGroup();
+            if (CameraTransform != null)
+                transform.Children.Add(CameraTransform);
             transform.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), _mouseDelta.X)));
             transform.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), _mouseDelta.Y)));
             CameraTransform = transform;
@@ -132,9 +134,11 @@ namespace ModelCreator.ViewModel
         /// </summary>
         private void MouseWheelExecuted(MouseWheelEventArgs args)
         {
-            _mouseScale = 1 + args.Delta / 1000f;
+            _mouseScale = 1 - args.Delta / 1000f;
 
             var transform = new Transform3DGroup();
+            if (CameraTransform != null)
+                transform.Children.Add(CameraTransform);
             transform.Children.Add(new ScaleTransform3D(_mouseScale, _mouseScale, _mouseScale));
             CameraTransform = transform;
         }

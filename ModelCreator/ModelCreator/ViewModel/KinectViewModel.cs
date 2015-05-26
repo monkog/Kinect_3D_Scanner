@@ -1,6 +1,5 @@
 ﻿using Microsoft.Practices.Prism.Commands;
 using System.Windows.Input;
-using System.Windows.Media.Media3D;
 using Microsoft.Kinect;
 using ModelCreator.View;
 
