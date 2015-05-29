@@ -55,7 +55,7 @@ namespace ModelCreator.ViewModel
         /// <summary>
         /// Gets or sets model bigest size.
         /// </summary>
-        public double ModelSize { get; set; }
+        public double ModelSize { get { return 20; } }
         #endregion Public Properties
         #region .ctor
         /// <summary>
@@ -89,10 +89,7 @@ namespace ModelCreator.ViewModel
         {
             DepthImagePixel[] data = KinectService.GetDepthData();
             if (_builder == null)
-            {
-                ModelSize = ModelBuilder.GetModelSize(data, KinectService.KinectDepthImage.PixelWidth);
                 _builder = new ModelBuilder(ModelSize, CubeDivide);
-            }
 
             _builder.CheckVerticesInCube((int)CurrentRotation, data, KinectService.Kinect.DepthStream.NominalFocalLengthInPixels);
             CurrentRotation = CurrentRotation + RotationAngle;

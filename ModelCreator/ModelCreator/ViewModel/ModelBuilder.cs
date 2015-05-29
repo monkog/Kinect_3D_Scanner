@@ -11,7 +11,10 @@ namespace ModelCreator.ViewModel
     {
         #region Private Members
         private CubeEx _modelCube;
+        private const int ImageWidth = 640;
         private const int Tolerance = 50;
+        private const int ImageHeight = 480;
+
         #endregion Private Members
         #region Constructors
         public ModelBuilder(double size, int divide)
@@ -201,7 +204,6 @@ namespace ModelCreator.ViewModel
 
             return new Point3D(x, y, z);
         }
-        //metoda tworzaca duzy szescian 
         private Model3DGroup CreateBigCube(double X, double Y, double Z, double size)
         {
             Model3DGroup cube = new Model3DGroup();
@@ -326,9 +328,24 @@ namespace ModelCreator.ViewModel
                     break;
             }
         }
-        private void GetMinMaxValues(out int min, out int max)
+        private void RotateCube(int angle)
         {
-            throw new NotImplementedException();
+            var myRotateTransform3D = new RotateTransform3D();
+            var myAxisAngleRotation3D = new AxisAngleRotation3D
+            {
+                Axis = new Vector3D(0, 1, 0),
+                Angle = angle
+            };
+            myRotateTransform3D.Rotation = myAxisAngleRotation3D;
+            _modelCube.Cube.Transform = myRotateTransform3D;
+        }
+        private DepthImagePixel[,] CreateDepthArray(DepthImagePixel[] rawData)
+        {
+            var data = new DepthImagePixel[ImageWidth, ImageHeight];
+            for (int j = 0; j < ImageHeight; j++)
+                for (int i = 0; i < ImageWidth; i++)
+                    data[i, j] = rawData[j * ImageWidth + i];
+            return data;
         }
         #endregion Private Methods
         #region Public Methods
@@ -340,84 +357,44 @@ namespace ModelCreator.ViewModel
         /// <param name="f">The focal length for Kinect</param>
         public void CheckVerticesInCube(int angle, DepthImagePixel[] rawData, float f)
         {
-            var myRotateTransform3D = new RotateTransform3D();
-            var myAxisAngleRotation3D = new AxisAngleRotation3D
-            {
-                Axis = new Vector3D(0, 1, 0),
-                Angle = angle
-            };
-            myRotateTransform3D.Rotation = myAxisAngleRotation3D;
-            _modelCube.Cube.Transform = myRotateTransform3D;
-
-            DepthImagePixel[,] data = new DepthImagePixel[640, 480];
-            for (int j = 0; j < 480; j++)
-                for (int i = 0; i < 640; i++)
-                    data[i, j] = rawData[j * 640 + i];
+            RotateCube(angle);
+            var data = CreateDepthArray(rawData);
+            var triangles = MapDepthDataTo3D(f, data);
 
             switch (angle)
             {
                 case 0:
-                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                            {
-                                var list = _modelCube.Hexahedrons[i, j, k];
-                                foreach (var point in list)
-                                {
-                                    int x = (int)(point.Point.X / point.Point.Z * f);
-                                    int y = (int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
-                                        point.IsChecked = false;
-                                }
-                            }
+                    foreach (var tetrahedron in _modelCube.TetrahedronsList)
+                        foreach (var vertex in tetrahedron)
+                        {
+                            Vector3D ray = new Vector3D(vertex.Point.X, vertex.Point.Y, vertex.Point.Z);
+
+                        }
                     break;
                 case 90:
-                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                            {
-                                var list = _modelCube.Hexahedrons[i, j, k];
-                                foreach (var point in list)
-                                {
-                                    int x = (int)(point.Point.Z / (-point.Point.X) * f);
-                                    int y = (int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
-                                        point.IsChecked = false;
-                                }
-                            }
                     break;
                 case 180:
-                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                            {
-                                var list = _modelCube.Hexahedrons[i, j, k];
-                                foreach (var point in list)
-                                {
-                                    int x = (int)(point.Point.X / point.Point.Z * f);
-                                    int y = -(int)(point.Point.Y / point.Point.Z * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
-                                        point.IsChecked = false;
-                                }
-                            }
                     break;
                 case 270:
-                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
-                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
-                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
-                            {
-                                var list = _modelCube.Hexahedrons[i, j, k];
-                                foreach (var point in list)
-                                {
-                                    int x = -(int)(point.Point.Z / point.Point.X * f);
-                                    int y = (int)(point.Point.Y / point.Point.X * f);
-                                    if (x >= 0 && y >= 0 && x < data.GetLength(0) && y < data.GetLength(1) && data[x, y].IsKnownDepth && data[x, y].Depth < 900)
-                                        point.IsChecked = false;
-                                }
-                            }
                     break;
             }
         }
+        private Point3D[,] MapDepthDataTo3D(float f, DepthImagePixel[,] data)
+        {
+            var triangles = new Point3D[ImageWidth, ImageHeight];
+            for (int i = 0; i < ImageWidth; i++)
+                for (int j = 0; j < ImageHeight; j++)
+                {
+                    if (!data[i, j].IsKnownDepth) continue;
+                    var depth = data[i, j].Depth;
+                    triangles[i, j] = new Point3D((i / f) * depth, (j / f) * depth, depth);
+                }
+            return triangles;
+        }
+        /// <summary>
+        /// Creates the model.
+        /// </summary>
+        /// <returns>Model group containing the created model</returns>
         public Model3DGroup CreateModel()
         {
             MeshGeometry3D mesh = new MeshGeometry3D();
