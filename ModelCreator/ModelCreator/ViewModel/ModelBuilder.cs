@@ -20,9 +20,9 @@ namespace ModelCreator.ViewModel
         private const double Epsilon = 10;
         #endregion Private Members
         #region Constructors
-        public ModelBuilder(double size, int divide)
+        public ModelBuilder(double size, int divide, int depth)
         {
-            _modelCube = DividedCube(divide, CreateBigCube(0, 0, 0, size));
+            _modelCube = DividedCube(divide, CreateBigCube(0, 0, depth, size));
             _triangleIndices = CreateTriangleIndicesList();
         }
         #endregion Constructors
@@ -201,41 +201,18 @@ namespace ModelCreator.ViewModel
 
             return new Point3D(x, y, z);
         }
-        private Model3DGroup CreateBigCube(double X, double Y, double Z, double size)
+        private Model3DGroup CreateBigCube(double x, double y, double z, double size)
         {
             Model3DGroup cube = new Model3DGroup();
             MeshGeometry3D mesh = new MeshGeometry3D();
-            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y - size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y - size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z - size / 2));
-            mesh.Positions.Add(new Point3D(X + size / 2, Y + size / 2, Z + size / 2));
-            mesh.Positions.Add(new Point3D(X - size / 2, Y + size / 2, Z + size / 2));
-
-            // mesh.TriangleIndices.Add(new int[] { 3, 2, 6, 3, 6, 7, 2, 1, 5, 2, 5, 6, 1, 0, 4, 1, 4, 5, 0, 3, 7, 0, 7, 4, 7, 6, 5, 7, 5, 4, 2, 3, 0, 2, 0, 1 });
-
-
-
-            ////front side triangles
-            //cube.Children.Add(CreateTriangleModel(p3, p2, p6));
-            //cube.Children.Add(CreateTriangleModel(p3, p6, p7));
-            ////right side triangles
-            //cube.Children.Add(CreateTriangleModel(p2, p1, p5));
-            //cube.Children.Add(CreateTriangleModel(p2, p5, p6));
-            ////back side triangles
-            //cube.Children.Add(CreateTriangleModel(p1, p0, p4));
-            //cube.Children.Add(CreateTriangleModel(p1, p4, p5));
-            ////left side triangles
-            //cube.Children.Add(CreateTriangleModel(p0, p3, p7));
-            //cube.Children.Add(CreateTriangleModel(p0, p7, p4));
-            ////top side triangles
-            //cube.Children.Add(CreateTriangleModel(p7, p6, p5));
-            //cube.Children.Add(CreateTriangleModel(p7, p5, p4));
-            ////bottom side triangles
-            //cube.Children.Add(CreateTriangleModel(p2, p3, p0));
-            //cube.Children.Add(CreateTriangleModel(p2, p0, p1));
+            mesh.Positions.Add(new Point3D(x - (size / 2), y - (size / 2), z + (size / 2)));
+            mesh.Positions.Add(new Point3D(x + (size / 2), y - (size / 2), z + (size / 2)));
+            mesh.Positions.Add(new Point3D(x + (size / 2), y - (size / 2), z + (size)));
+            mesh.Positions.Add(new Point3D(x - (size / 2), y - (size / 2), z + (size)));
+            mesh.Positions.Add(new Point3D(x - (size / 2), y + (size / 2), z + (size / 2)));
+            mesh.Positions.Add(new Point3D(x + (size / 2), y + (size / 2), z + (size / 2)));
+            mesh.Positions.Add(new Point3D(x + (size / 2), y + (size / 2), z + (size)));
+            mesh.Positions.Add(new Point3D(x - (size / 2), y + (size / 2), z + (size)));
 
             Material material = new DiffuseMaterial(new SolidColorBrush(Colors.DarkKhaki));
             GeometryModel3D model = new GeometryModel3D(mesh, material);
@@ -355,7 +332,8 @@ namespace ModelCreator.ViewModel
                     depthPoints[i, j] = new Point3D((i / f) * depth, (j / f) * depth, depth);
                 }
             return depthPoints;
-        }/// <summary>
+        }
+        /// <summary>
         /// Checks if the specified ray hits the triagnlge descibed by p1, p2 and p3.
         /// Möller–Trumbore ray-triangle intersection algorithm implementation.
         /// </summary>
@@ -423,10 +401,32 @@ namespace ModelCreator.ViewModel
                 for (int j = 0; j < ImageHeight - 1; j++)
                 {
                     triangles.Add(new Triangle(new Point(i, j), new Point(i, j + 1), new Point(i + 1, j + 1)));
-                    //triangles.Add(new Triangle(new Point(i, j), new Point(i + 1, j), new Point(i + 1, j + 1)));
+                    triangles.Add(new Triangle(new Point(i, j), new Point(i + 1, j), new Point(i + 1, j + 1)));
                 }
 
             return triangles;
+        }
+        private Model3DGroup CreateVertex(double x, double y, double z, double size)
+        {
+            Model3DGroup cube = new Model3DGroup();
+            MeshGeometry3D mesh = new MeshGeometry3D();
+
+            mesh.Positions.Add(new Point3D(x + 0, y + 0, z + 0));
+            mesh.Positions.Add(new Point3D(x + 1, y + 0, z + 0));
+            mesh.Positions.Add(new Point3D(x + 1, y + 1, z + 0));
+            mesh.Positions.Add(new Point3D(x + 0, y + 1, z + 0));
+            mesh.Positions.Add(new Point3D(x + 0, y + 0, z + 1));
+            mesh.Positions.Add(new Point3D(x + 1, y + 0, z + 1));
+            mesh.Positions.Add(new Point3D(x + 1, y + 1, z + 1));
+            mesh.Positions.Add(new Point3D(x + 0, y + 1, z + 1));
+
+            mesh.TriangleIndices = new Int32Collection(new[] { 0, 1, 3, 1, 2, 3, 0, 4, 3, 4, 7, 3, 4, 6, 7, 4, 5, 6, 0, 4, 1, 1, 4, 5, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2 });
+
+            Material material = new DiffuseMaterial(new SolidColorBrush(Colors.Black));
+            GeometryModel3D model = new GeometryModel3D(mesh, material);
+            cube.Children.Add(model);
+            cube.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-2, -3, -1)));
+            return cube;
         }
         #endregion Private Methods
         #region Public Methods
@@ -441,31 +441,43 @@ namespace ModelCreator.ViewModel
             RotateCube(angle);
             var data = CreateDepthArray(rawData);
             var triangles = MapDepthDataTo3D(f, data);
+            Point startPoint = new Point(data.GetLength(0) / 2.0 - (_modelCube.Cube.Bounds.SizeX / 2), data.GetLength(1) / 2.0 - (_modelCube.Cube.Bounds.SizeY / 2));
 
             switch (angle)
             {
                 case 0:
+                    for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                        for (int j = 0; j < _modelCube.Hexahedrons.GetLength(1); j++)
+                            for (int k = 0; k < _modelCube.Hexahedrons.GetLength(2); k++)
+                            {
+                                if (data[(int) startPoint.X + i, (int) startPoint.Y + j].IsKnownDepth
+                                    && k < data[(int) startPoint.X + i, (int) startPoint.Y + j].Depth)
+                                    _modelCube.Hexahedrons[i, j, k][0].IsChecked = false;
+                                if (data[(int)startPoint.X + i + 1, (int)startPoint.Y + j].IsKnownDepth
+                                    && k < data[(int)startPoint.X + i + 1, (int)startPoint.Y + j].Depth)
+                                    _modelCube.Hexahedrons[i, j, k][1].IsChecked = false;
+                            }
                     //foreach (var tetrahedron in _modelCube.TetrahedronsList)
                     //{
-                        //if (_modelCube.TetrahedronsList.IndexOf(tetrahedron) % 4 != 0) continue;
-                        //Console.Write(" " + _modelCube.TetrahedronsList.IndexOf(tetrahedron));
-                        //foreach (var vertex in tetrahedron)
-                        //{
-                        //    foreach (var triangle in _triangleIndices)
-                        //    {
-                        //        if (!triangles[(int)triangle.A.X, (int)triangle.A.Y].HasValue ||
-                        //            !triangles[(int)triangle.B.X, (int)triangle.B.Y].HasValue
-                        //            || !triangles[(int)triangle.C.X, (int)triangle.C.Y].HasValue) continue;
-                        //        bool isIntersecting = Intersect(triangles[(int)triangle.A.X, (int)triangle.A.Y].Value,
-                        //            triangles[(int)triangle.B.X, (int)triangle.B.Y].Value,
-                        //            triangles[(int)triangle.C.X, (int)triangle.C.Y].Value, vertex.Point);
-                        //        if (isIntersecting)
-                        //            vertex.IsChecked = false;
-                        //    }
-                        //}
+                    //if (_modelCube.TetrahedronsList.IndexOf(tetrahedron) % 4 != 0) continue;
+                    //Console.Write(" " + _modelCube.TetrahedronsList.IndexOf(tetrahedron));
+                    //foreach (var vertex in tetrahedron)
+                    //{
+                    //    foreach (var triangle in _triangleIndices)
+                    //    {
+                    //        if (!triangles[(int)triangle.A.X, (int)triangle.A.Y].HasValue ||
+                    //            !triangles[(int)triangle.B.X, (int)triangle.B.Y].HasValue
+                    //            || !triangles[(int)triangle.C.X, (int)triangle.C.Y].HasValue) continue;
+                    //        bool isIntersecting = Intersect(triangles[(int)triangle.A.X, (int)triangle.A.Y].Value,
+                    //            triangles[(int)triangle.B.X, (int)triangle.B.Y].Value,
+                    //            triangles[(int)triangle.C.X, (int)triangle.C.Y].Value, vertex.Point);
+                    //        if (isIntersecting)
+                    //            vertex.IsChecked = false;
+                    //    }
                     //}
-                    var tetra = _modelCube.TetrahedronsList.First();
-                    tetra[0].IsChecked = false;
+                    //}
+                    //var tetra = _modelCube.TetrahedronsList.First();
+                    //tetra[0].IsChecked = false;
                     //tetra[3].IsChecked = false;
                     break;
                 case 90:
@@ -482,6 +494,7 @@ namespace ModelCreator.ViewModel
         /// <returns>Model group containing the created model</returns>
         public Model3DGroup CreateModel()
         {
+            RotateCube(360);
             MeshGeometry3D mesh = new MeshGeometry3D();
             foreach (var t in _modelCube.TetrahedronsList)
                 foreach (var point in MarchingTetrahedrons(t))
@@ -490,8 +503,9 @@ namespace ModelCreator.ViewModel
             for (int i = 0; i < mesh.Positions.Count; i += 3)
             {
                 mesh.TriangleIndices.Add(i);
-                mesh.TriangleIndices.Add(i + 1);
                 mesh.TriangleIndices.Add(i + 2);
+                mesh.TriangleIndices.Add(i + 1);
+
             }
 
             Material material = new DiffuseMaterial(
@@ -499,6 +513,15 @@ namespace ModelCreator.ViewModel
             GeometryModel3D model = new GeometryModel3D(mesh, material);
             Model3DGroup group = new Model3DGroup();
             group.Children.Add(model);
+
+            for (int i = 0; i < _modelCube.Hexahedrons.GetLength(0); i++)
+                for (int j = 0; j < _modelCube.Hexahedrons.GetLength(0); j++)
+                    for (int k = 0; k < _modelCube.Hexahedrons.GetLength(0); k++)
+                        foreach (Point3DEx p in _modelCube.Hexahedrons[i, j, k])
+                            if (p.IsChecked)
+                                group.Children.Add(CreateVertex(p.Point.X, p.Point.Y, p.Point.Z, 2));
+                            else
+                                group.Children.Add(CreateVertex(p.Point.X, p.Point.Y, p.Point.Z, 2));
             return group;
         }
         /// <summary>

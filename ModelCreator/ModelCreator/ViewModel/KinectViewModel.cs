@@ -16,7 +16,8 @@ namespace ModelCreator.ViewModel
         private double _rotationAngle;
         private double _currentRotation;
         private const double FullRotationAngle = 360;
-        private const int CubeDivide = 20;
+        private const int CubeDivide = 5;
+        private const int ModelDepth = 1000;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -75,6 +76,7 @@ namespace ModelCreator.ViewModel
         /// The command, executed after clicking on capture button
         /// </summary>
         private ICommand _captureCommand;
+
         /// <summary>
         /// Gets the command.
         /// </summary>
@@ -89,7 +91,7 @@ namespace ModelCreator.ViewModel
         {
             DepthImagePixel[] data = KinectService.GetDepthData();
             if (_builder == null)
-                _builder = new ModelBuilder(ModelSize, CubeDivide);
+                _builder = new ModelBuilder(ModelBuilder.GetModelSize(data, 640), CubeDivide, ModelDepth);
 
             _builder.CheckVerticesInCube((int)CurrentRotation, data, KinectService.Kinect.DepthStream.NominalFocalLengthInPixels);
             CurrentRotation = CurrentRotation + RotationAngle;

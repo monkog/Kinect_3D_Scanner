@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 using ModelCreator.View;
@@ -52,10 +51,6 @@ namespace ModelCreator.ViewModel
             Model = model;
         }
         #endregion Constructors
-        #region Private Methods
-        #endregion Private Methods
-        #region Public Methods
-        #endregion Public Methods
         #region Commands
         private ActionCommand<MouseButtonEventArgs> _mouseClickCommand;
         public ActionCommand<MouseButtonEventArgs> MouseClickCommand
