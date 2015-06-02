@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using Microsoft.Kinect;
@@ -14,19 +16,14 @@ namespace ModelCreator.ViewModel
         private const int ImageWidth = 640;
         private const int Tolerance = 50;
         private const int ImageHeight = 480;
-
+        private List<Triangle> _triangleIndices;
+        private const double Epsilon = 10;
         #endregion Private Members
         #region Constructors
         public ModelBuilder(double size, int divide)
         {
-            // ModelVisual3D mv3d = new ModelVisual3D();
-            // Model3DGroup c = CreateBigCube(0, 0, 0, size);   //<ta 5 trzeba zmienic z aktualnym rozmiarem skanowanego modelu
-            // mv3d.Content = c;
-            //  this.mainViewport.Children.Add(mv3d);
-
-
             _modelCube = DividedCube(divide, CreateBigCube(0, 0, 0, size));
-            // Model3DGroup ourModel = CreatingModel(newCube);
+            _triangleIndices = CreateTriangleIndicesList();
         }
         #endregion Constructors
         #region Private Methods
@@ -347,6 +344,90 @@ namespace ModelCreator.ViewModel
                     data[i, j] = rawData[j * ImageWidth + i];
             return data;
         }
+        private Point3D?[,] MapDepthDataTo3D(float f, DepthImagePixel[,] data)
+        {
+            var depthPoints = new Point3D?[ImageWidth, ImageHeight];
+            for (int i = 0; i < ImageWidth; i++)
+                for (int j = 0; j < ImageHeight; j++)
+                {
+                    if (!data[i, j].IsKnownDepth) continue;
+                    var depth = data[i, j].Depth;
+                    depthPoints[i, j] = new Point3D((i / f) * depth, (j / f) * depth, depth);
+                }
+            return depthPoints;
+        }/// <summary>
+        /// Checks if the specified ray hits the triagnlge descibed by p1, p2 and p3.
+        /// Möller–Trumbore ray-triangle intersection algorithm implementation.
+        /// </summary>
+        /// <param name="p1">Vertex 1 of the triangle.</param>
+        /// <param name="p2">Vertex 2 of the triangle.</param>
+        /// <param name="p3">Vertex 3 of the triangle.</param>
+        /// <param name="ray">The ray to test hit for.</param>
+        /// <returns><c>true</c> when the ray hits the triangle, otherwise <c>false</c></returns>
+        /// <remarks>http://answers.unity3d.com/questions/861719/a-fast-triangle-triangle-intersection-algorithm-fo.html</remarks>
+        private bool Intersect(Point3D p1P, Point3D p2P, Point3D p3P, Point3D rayP)
+        {
+            Vector3D p1 = new Vector3D(p1P.X, p1P.Y, p1P.Z);
+            Vector3D p2 = new Vector3D(p2P.X, p2P.Y, p2P.Z);
+            Vector3D p3 = new Vector3D(p3P.X, p3P.Y, p3P.Z);
+            Vector3D ray = new Vector3D(rayP.X, rayP.Y, rayP.Z);
+            // Vectors from p1 to p2/p3 (edges)
+            Vector3D e1, e2;
+
+            Vector3D p, q, t;
+            double det, invDet, u, v;
+
+            //Find vectors for two edges sharing vertex/point p1
+            e1 = p2 - p1;
+            e2 = p3 - p1;
+
+            // calculating determinant 
+            p = Vector3D.CrossProduct(ray, e2);
+
+            //Calculate determinat
+            det = Vector3D.DotProduct(e1, p);
+
+            //if determinant is near zero, ray lies in plane of triangle otherwise not
+            if (det > -Epsilon && det < Epsilon) { return false; }
+            invDet = 1.0f / det;
+
+            //calculate distance from p1 to ray origin
+            t = -p1;
+
+            //Calculate u parameter
+            u = Vector3D.DotProduct(t, p) * invDet;
+
+            //Check for ray hit
+            if (u < 0 || u > 1) { return false; }
+
+            //Prepare to test v parameter
+            q = Vector3D.CrossProduct(t, e1);
+
+            //Calculate v parameter
+            v = Vector3D.DotProduct(ray, q) * invDet;
+
+            //Check for ray hit
+            if (v < 0 || u + v > 1) { return false; }
+
+            if ((Vector3D.DotProduct(e2, q) * invDet) > Epsilon)
+                return true;
+
+            // No hit at all
+            return false;
+        }
+        private List<Triangle> CreateTriangleIndicesList()
+        {
+            var triangles = new List<Triangle>();
+
+            for (int i = 0; i < ImageWidth - 1; i++)
+                for (int j = 0; j < ImageHeight - 1; j++)
+                {
+                    triangles.Add(new Triangle(new Point(i, j), new Point(i, j + 1), new Point(i + 1, j + 1)));
+                    //triangles.Add(new Triangle(new Point(i, j), new Point(i + 1, j), new Point(i + 1, j + 1)));
+                }
+
+            return triangles;
+        }
         #endregion Private Methods
         #region Public Methods
         /// <summary>
@@ -364,12 +445,28 @@ namespace ModelCreator.ViewModel
             switch (angle)
             {
                 case 0:
-                    foreach (var tetrahedron in _modelCube.TetrahedronsList)
-                        foreach (var vertex in tetrahedron)
-                        {
-                            Vector3D ray = new Vector3D(vertex.Point.X, vertex.Point.Y, vertex.Point.Z);
-
-                        }
+                    //foreach (var tetrahedron in _modelCube.TetrahedronsList)
+                    //{
+                        //if (_modelCube.TetrahedronsList.IndexOf(tetrahedron) % 4 != 0) continue;
+                        //Console.Write(" " + _modelCube.TetrahedronsList.IndexOf(tetrahedron));
+                        //foreach (var vertex in tetrahedron)
+                        //{
+                        //    foreach (var triangle in _triangleIndices)
+                        //    {
+                        //        if (!triangles[(int)triangle.A.X, (int)triangle.A.Y].HasValue ||
+                        //            !triangles[(int)triangle.B.X, (int)triangle.B.Y].HasValue
+                        //            || !triangles[(int)triangle.C.X, (int)triangle.C.Y].HasValue) continue;
+                        //        bool isIntersecting = Intersect(triangles[(int)triangle.A.X, (int)triangle.A.Y].Value,
+                        //            triangles[(int)triangle.B.X, (int)triangle.B.Y].Value,
+                        //            triangles[(int)triangle.C.X, (int)triangle.C.Y].Value, vertex.Point);
+                        //        if (isIntersecting)
+                        //            vertex.IsChecked = false;
+                        //    }
+                        //}
+                    //}
+                    var tetra = _modelCube.TetrahedronsList.First();
+                    tetra[0].IsChecked = false;
+                    //tetra[3].IsChecked = false;
                     break;
                 case 90:
                     break;
@@ -378,18 +475,6 @@ namespace ModelCreator.ViewModel
                 case 270:
                     break;
             }
-        }
-        private Point3D[,] MapDepthDataTo3D(float f, DepthImagePixel[,] data)
-        {
-            var triangles = new Point3D[ImageWidth, ImageHeight];
-            for (int i = 0; i < ImageWidth; i++)
-                for (int j = 0; j < ImageHeight; j++)
-                {
-                    if (!data[i, j].IsKnownDepth) continue;
-                    var depth = data[i, j].Depth;
-                    triangles[i, j] = new Point3D((i / f) * depth, (j / f) * depth, depth);
-                }
-            return triangles;
         }
         /// <summary>
         /// Creates the model.

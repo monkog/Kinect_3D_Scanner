@@ -36,9 +36,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Kinect, Version=1.8.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Microsoft SDKs\Kinect\v1.8\Assemblies\Microsoft.Kinect.dll</HintPath>
+    <Reference Include="Microsoft.Kinect">
+      <HintPath>..\packages\Kinect\v1.8\Assemblies\Microsoft.Kinect.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.Prism.Composition">
       <HintPath>..\packages\Prism.Composition.5.0.0\lib\NET45\Microsoft.Practices.Prism.Composition.dll</HintPath>
@@ -90,6 +89,7 @@
     <Compile Include="Converters\ValueToVisibilityConverter.cs" />
     <Compile Include="Model\CubeEx.cs" />
     <Compile Include="Model\PointEx.cs" />
+    <Compile Include="Model\Triangle.cs" />
     <Compile Include="ViewModel\IKinectService.cs" />
     <Compile Include="ViewModel\KinectService.cs" />
     <Compile Include="ViewModel\KinectViewModel.cs" />

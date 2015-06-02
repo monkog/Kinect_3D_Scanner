@@ -16,7 +16,7 @@ namespace ModelCreator.ViewModel
         private double _rotationAngle;
         private double _currentRotation;
         private const double FullRotationAngle = 360;
-        private const int CubeDivide = 5;
+        private const int CubeDivide = 20;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -55,7 +55,7 @@ namespace ModelCreator.ViewModel
         /// <summary>
         /// Gets or sets model bigest size.
         /// </summary>
-        public double ModelSize { get { return 20; } }
+        public double ModelSize { get { return 200; } }
         #endregion Public Properties
         #region .ctor
         /// <summary>

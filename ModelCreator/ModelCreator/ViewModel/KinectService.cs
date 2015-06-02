@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -23,6 +24,7 @@ namespace ModelCreator.ViewModel
         private string _errorGridMessage;
         private DepthImagePixel[] _depthData;
         private readonly object _depthDataMutex = new object();
+        private bool _wasSaved;
         #endregion Private Fields
         #region Public Properties
         /// <summary>
@@ -200,31 +202,34 @@ namespace ModelCreator.ViewModel
         {
             using (var depthFrame = e.OpenDepthImageFrame())
             {
+                if (depthFrame == null || depthFrame.PixelDataLength == 0)
+                    return;
                 lock (_depthDataMutex)
                 {
-                    if (depthFrame == null || depthFrame.PixelDataLength == 0)
-                        return;
                     _depthData = new DepthImagePixel[depthFrame.PixelDataLength];
                     depthFrame.CopyDepthImagePixelDataTo(_depthData);
 
-                    // Get the min and max reliable depth for the current frame
-                    int minDepth = depthFrame.MinDepth;
-                    int maxDepth = depthFrame.MaxDepth;
+                    short[] pixels = new short[_depthData.Length];
+                    depthFrame.CopyPixelDataTo(pixels);
 
-                    // Convert the depth to grayscale
-                    int colorPixelIndex = 0;
-                    byte[] colorPixels = new byte[_depthData.Length * 2];
-                    for (int i = 0; i < _depthData.Length; ++i)
-                    {
-                        short depth = _depthData[i].Depth;
-                        byte intensity = (byte)(Math.Max(Math.Min(depth, maxDepth), minDepth));
-
-                        colorPixels[colorPixelIndex++] = intensity;
-                        colorPixels[colorPixelIndex++] = intensity;
-                    }
-
-                    KinectDepthImage.WritePixels(_depthSourceBounds, colorPixels, _depthStride, 0);
+                    KinectDepthImage.WritePixels(_depthSourceBounds, pixels, _depthStride, 0);
                     OnPropertyChanged("KinectDepthImage");
+
+                    if (_wasSaved == false)
+                    {
+                        int stride = depthFrame.Width * depthFrame.BytesPerPixel;
+                        BitmapEncoder encoder = new PngBitmapEncoder();
+                        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(
+                            depthFrame.Width, depthFrame.Height, 96, 96, PixelFormats.Gray16, null, pixels, stride)));
+
+                        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "kimage.png");
+
+                        using (FileStream fs = new FileStream(path, FileMode.Create))
+                        {
+                            encoder.Save(fs);
+                        }
+                        _wasSaved = true;
+                    }
                 }
             }
         }
